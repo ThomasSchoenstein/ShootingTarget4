@@ -57,6 +57,8 @@
 #include "si7013.h"
 #include "tempsens.h"
 
+#include "targetFunctions.h"
+
 /***********************************************************************************************//**
  * @addtogroup Application
  * @{
@@ -103,9 +105,6 @@ static const gecko_configuration_t config = {
 /* Flag for indicating DFU Reset must be performed */
 uint8_t boot_to_dfu = 0;
 
-/**
- * @brief Function for taking a single temperature measurement with the WSTK Relative Humidity and Temperature (RHT) sensor.
- */
 void temperatureMeasure()
 {
   uint8_t htmTempBuffer[5]; /* Stores the temperature data in the Health Thermometer (HTM) format. */
@@ -139,8 +138,7 @@ void temperatureMeasure()
 /**
  * @brief  Main function
  */
-int main(void)
-{
+int main(void){
   // Initialize device
   initMcu();
   // Initialize board
@@ -148,19 +146,21 @@ int main(void)
   // Initialize application
   initApp();
 
+  initADC();
+
   // Initialize stack
   gecko_init(&config);
   // Initialize the Temperature Sensor
   Si7013_Detect(I2C0, SI7021_ADDR, NULL);
 
   while (1) {
-    /* Event pointer for handling events */
+    // Event pointer for handling events
     struct gecko_cmd_packet* evt;
 
-    /* Check for stack event. */
+    // Check for stack event.
     evt = gecko_wait_event();
 
-    /* Handle events */
+    // Handle events
     switch (BGLIB_MSG_ID(evt->header)) {
       /* This boot event is generated when the system boots up after reset.
        * Do not call any stack commands before receiving the boot event.
@@ -203,8 +203,8 @@ int main(void)
        * is read after every 1 second and then the indication of that is sent to the listening client. */
       case gecko_evt_hardware_soft_timer_id:
         /* Measure the temperature as defined in the function temperatureMeasure() */
-        temperatureMeasure();
-        break;
+    	  adcMeasure();
+	  break;
 
       case gecko_evt_le_connection_closed_id:
         /* Check if need to boot to dfu mode */

@@ -8,10 +8,11 @@
 #ifndef TARGETFUNCTIONS_H_
 #define TARGETFUNCTIONS_H_
 
-void sensorRead(void);
 void initADC(void);
 void initGPIO(void);
 void ADCoutputLED(uint32_t dataIn);
+int32_t ADCvalue();
+void adcMeasure();
 
 
 #endif /* TARGETFUNCTIONS_H_ */

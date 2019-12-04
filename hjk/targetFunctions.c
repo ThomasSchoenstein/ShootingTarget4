@@ -127,6 +127,39 @@ void initADC(void){
 	ADC_InitSingle(ADC0, &adcSingleConfigPC9);  //conversion init for C9
 	ADC_InitSingle(ADC0, &adcSingleConfigPC10);  //conversion init for C10
 }
+
+int32_t ADCvalue(){
+	int32_t value;
+	value=0x00000045;
+
+	return value;
+}
+
+void adcMeasure(){
+  uint8_t ADCBuffer[5]; /* Stores the ADC data in the Health Thermometer (HTM) format. */
+uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
+  int32_t adcData;     /* Stores the ADC data read from the Piezo sensor. */
+  uint32_t pressure;   /* Stores the ADC data read from the sensor in the correct format */
+  uint8_t *p = ADCBuffer; /* Pointer to ADC buffer needed for converting values to bitstream. */
+
+  /* Convert flags to bitstream and append them in the ADC data buffer (ADCBuffer) */
+  UINT8_TO_BITSTREAM(p, flags);
+
+  /* Sensor pressure measurement */
+  adcData=ADCvalue();
+
+  /* Convert sensor data to correct format */
+  pressure = FLT_TO_UINT32(adcData, -3);
+  /* Convert pressure to bitstream and place it in the ADC data buffer (ADCBuffer) */
+  UINT32_TO_BITSTREAM(p, pressure);
+
+  /* Send indication of the pressure in ADCBuffer to all "listening" clients.
+   * This enables the Piezo to display the pressure.
+   *  0xFF as connection ID will send indications to all connections. */
+  gecko_cmd_gatt_server_send_characteristic_notification(
+    0xFF, gattdb_temperature_measurement, 5, ADCBuffer);
+}
+
 /*
 void ADCoutputLED(uint32_t dataIn){
 	//void GPIO_PinOutSet(GPIO_Port_TypeDef port, unsigned int pin)
@@ -158,32 +191,3 @@ void ADCoutputLED(uint32_t dataIn){
 }
 */
 
-
-void sensorRead(void){
-	uint8_t adcTempBuffer[5]; /* Stores the ADC data in the ___________ format. */
-	uint8_t flags = 0x00;   /* MUST CHANGE FLAGS aggragate? pressure? */
-	int32_t ADCdat;     /* Stores the data read from the ADC. */
-	uint32_t rhData = 0;    /* Dummy needed for storing Relative Humidity data. */
-	uint32_t impact;   /* Stores the impact data read from the sensor in the correct format */
-	uint8_t *p = adcTempBuffer; /* Pointer to ADC buffer needed for converting values to bitstream. */
-	static int32_t DummyValue = 0l;
-
-	/* Convert flags to bitstream and append them in the HTM temperature data buffer (htmTempBuffer) */
-	UINT8_TO_BITSTREAM(p, flags);
-
-	/* Sensor relative humidity and temperature measurement returns 0 on success, nonzero otherwise */
-	if (Si7013_MeasureRHAndTemp(I2C0, SI7021_ADDR, &rhData, &ADCdat) != 0) {
-		ADCdat = DummyValue + 20000l;
-	  DummyValue = (DummyValue + 1000l) % 21000l;
-	}
-	/* Convert sensor data to correct temperature format */
-	impact = FLT_TO_UINT32(ADCdat, -3);
-	/* Convert temperature to bitstream and place it in the HTM temperature data buffer (htmTempBuffer) */
-	UINT32_TO_BITSTREAM(p, impact);
-
-	/* Send indication of the temperature in htmTempBuffer to all "listening" clients.
-	 * This enables the Health Thermometer in the Blue Gecko app to display the temperature.
-	 *  0xFF as connection ID will send indications to all connections. */
-	gecko_cmd_gatt_server_send_characteristic_notification(
-	  0xFF, gattdb_temperature_measurement, 5, adcTempBuffer);
-}
