@@ -15,14 +15,22 @@
 #include "native_gecko.h"
 #include "gatt_db.h"
 
-void initGPIO(void){
-  /* Enable GPIO clock */
-  CMU_ClockEnable(cmuClock_GPIO, true);
+#include "delay.h"
+#include "targetFunctions.h"
 
-  GPIO_PinModeSet(gpioPortA, 0, gpioModePushPull, 1);
+int32_t i;
+int32_t value=12;
+
+void initGPIO(void){
+	CMU_ClockEnable(cmuClock_HFPER, true);
+
+	GPIO_PinModeSet(gpioPortC, pinNumb, gpioModePushPull, 0);
+
+	GPIO_PinOutSet(gpioPortC, pinNumb);
 }
 
 void initADC(void){
+
 	CMU_ClockEnable(cmuClock_ADC0, true);  //enable ADC clock
 	CMU_ClockEnable(cmuClock_PRS, true);   //enable PRS clock
 	ADC_IntEnable(ADC0, ADC_IEN_SINGLE); //enable ADC interrupts
@@ -36,14 +44,6 @@ void initADC(void){
 		adcConfig.warmUpMode=adcWarmupKeepADCWarm;
 
 	ADC_Init(ADC0,&adcConfig);  //function to init ADC
-
-	//Clears FIFO and pending interrupt
-	ADC0->SINGLEFIFOCLEAR = ADC_SINGLEFIFOCLEAR_SINGLEFIFOCLEAR;
-	NVIC_ClearPendingIRQ(ADC0_IRQn);
-	NVIC_EnableIRQ(ADC0_IRQn);
-
-
-	//ADC_LoadDevinfoCal(ADC0, adcRefVDD, true);   //Function calebrates ADC
 
 	//PINS ARE FOUND ON PAGE 72 OF BGM111 DATA SHEET
 	ADC_InitSingle_TypeDef adcSingleConfigPC6=ADC_INITSINGLE_DEFAULT;  //initializaion variables for single conversion on Pin PC6
@@ -61,7 +61,7 @@ void initADC(void){
 		adcSingleConfigPC6.resolution=adcRes8Bit;  //8 bit resolution
 		adcSingleConfigPC6.singleDmaEm2Wu=true;    //DMA is enabled when in EM2
 
-	ADC_InitSingle_TypeDef adcSingleConfigPC7=ADC_INITSINGLE_DEFAULT;  //initializaion variables for single conversion on Pin PC7
+/*	ADC_InitSingle_TypeDef adcSingleConfigPC7=ADC_INITSINGLE_DEFAULT;  //initializaion variables for single conversion on Pin PC7
 		adcSingleConfigPC7.posSel=adcPosSelAPORT1YCH7;       //Positive is Pin PC7
 
 		adcSingleConfigPC7.acqTime=adcAcqTime1;   //aquire after 1 clock cycle
@@ -120,21 +120,39 @@ void initADC(void){
 		adcSingleConfigPC10.rep=false;              //will not repeat
 		adcSingleConfigPC10.resolution=adcRes8Bit;  //8 bit resolution
 		adcSingleConfigPC10.singleDmaEm2Wu=true;    //DMA is enabled when in EM2
-
+*/
 	ADC_InitSingle(ADC0, &adcSingleConfigPC6);  //conversion init for pin C6
-	ADC_InitSingle(ADC0, &adcSingleConfigPC7);  //conversion init for pin C7
+/*	ADC_InitSingle(ADC0, &adcSingleConfigPC7);  //conversion init for pin C7
 	ADC_InitSingle(ADC0, &adcSingleConfigPC8);  //conversion init for C8
 	ADC_InitSingle(ADC0, &adcSingleConfigPC9);  //conversion init for C9
-	ADC_InitSingle(ADC0, &adcSingleConfigPC10);  //conversion init for C10
+	ADC_InitSingle(ADC0, &adcSingleConfigPC10);  //conversion init for C10   */
 }
 
 int32_t ADCvalue(){
-	int32_t value;
-	value=0x00000045;
+	value=i;
 
-	return value;
+	i++;
+/*
+
+	// Start ADC conversion
+    ADC_Start(ADC0, adcStartSingle);
+
+    CHECK:
+
+    // Wait for conversion to be complete
+    if((ADC0->STATUS & _ADC_STATUS_SINGLEDV_MASK)){
+    	goto CHECK;
+    }
+    else if((ADC0->STATUS & _ADC_STATUS_SINGLEDV_MASK)){
+		value=ADC_DataSingleGet(ADC0);
+    }*/
+
+//    GPIO_PinOutClear(gpioPortC, 11);
+
+    return value;
 }
 
+//This function handles the bluetooth capability and sends out the data read in from ADCvalue()
 void adcMeasure(){
   uint8_t ADCBuffer[5]; /* Stores the ADC data in the Health Thermometer (HTM) format. */
 uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no temperature type. */
@@ -147,6 +165,7 @@ uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no 
 
   /* Sensor pressure measurement */
   adcData=ADCvalue();
+  GPIO_PinOutSet(gpioPortC, 11);
 
   /* Convert sensor data to correct format */
   pressure = FLT_TO_UINT32(adcData, -3);
@@ -160,34 +179,4 @@ uint8_t flags = 0x00;   /* HTM flags set as 0 for Celsius, no time stamp and no 
     0xFF, gattdb_temperature_measurement, 5, ADCBuffer);
 }
 
-/*
-void ADCoutputLED(uint32_t dataIn){
-	//void GPIO_PinOutSet(GPIO_Port_TypeDef port, unsigned int pin)
-	//void GPIO_PinOutClear(GPIO_Port_TypeDef port, unsigned int pin)
-	uint8_t i=0;
-	uint32_t dataCpy;
-	uint32_t dataCpy1;
-
-	dataCpy=dataIn;
-
-	GPIO_PinOutToggle(gpioPortA, 0);
-	USTIMER_DelayIntSafe(1000000); //delays by 1 second
-
-	while(i<32){
-		dataCpy=dataCpy>>i;
-		dataCpy1=dataCpy*0x00000001;
-		if(dataCpy==0){
-			GPIO_PinOutClear(gpioPortA, 0);
-		}
-		else if(dataCpy==1){
-			GPIO_PinOutSet(gpioPortA, 0);
-		}
-		USTIMER_DelayIntSafe(1000000);  //delays by 1 second
-
-		GPIO_PinOutToggle(gpioPortA, 0);
-		USTIMER_DelayIntSafe(1000);  //delays by 1 milisecond
-		i++;
-	}
-}
-*/
 
