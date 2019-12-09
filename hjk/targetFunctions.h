@@ -10,7 +10,7 @@
 #ifndef TARGETFUNCTIONS_H_
 #define TARGETFUNCTIONS_H_
 
-#define pinNumb 12
+#define pinNumb 11
 
 void initADC(void);
 void initGPIO(void);

@@ -115,10 +115,7 @@ int main(void){
   initMcu();
   // Initialize board
   initBoard();
-  // Initialize application
-  initApp();
 
-  EMU_DCDCInit(&dcdcInit);
 
   // Setup SysTick Timer for 1 msec interrupts
   if (SysTick_Config(CMU_ClockFreqGet(cmuClock_CORE) / 1000)) {
@@ -136,8 +133,10 @@ int main(void){
 	  GPIO_PinOutClear(gpioPortC, pinNumb);
 	  Delay(1000);
 	  GPIO_PinOutSet(gpioPortC, pinNumb);
+	  Delay(1000);
+  }
+}/*
 
-	  /*
 	// Event pointer for handling events
     struct gecko_cmd_packet* evt;
 
@@ -225,7 +224,7 @@ int main(void){
 
       default:
         break;
-    }*/
+    }
   }
 }
 

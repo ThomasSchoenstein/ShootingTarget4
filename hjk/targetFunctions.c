@@ -19,14 +19,15 @@
 #include "targetFunctions.h"
 
 int32_t i;
-int32_t value=12;
+int32_t value=12;   //want pin C11
 
 void initGPIO(void){
-	CMU_ClockEnable(cmuClock_HFPER, true);
+	//initApp function uses a GPIO command so GPIO is already initialized?
+	//initBoard function enables GPIO clock
 
 	GPIO_PinModeSet(gpioPortC, pinNumb, gpioModePushPull, 0);
 
-	GPIO_PinOutSet(gpioPortC, pinNumb);
+	GPIO_PinOutClear(gpioPortC, pinNumb);
 }
 
 void initADC(void){
@@ -132,24 +133,26 @@ int32_t ADCvalue(){
 	value=i;
 
 	i++;
-/*
 
+/*
 	// Start ADC conversion
     ADC_Start(ADC0, adcStartSingle);
 
+    // Wait for conversion to be complete
+
     CHECK:
 
-    // Wait for conversion to be complete
     if((ADC0->STATUS & _ADC_STATUS_SINGLEDV_MASK)){
     	goto CHECK;
     }
     else if((ADC0->STATUS & _ADC_STATUS_SINGLEDV_MASK)){
 		value=ADC_DataSingleGet(ADC0);
-    }*/
+    }
 
-//    GPIO_PinOutClear(gpioPortC, 11);
+    GPIO_PinOutToggle(gpioPortC, 11);
 
     return value;
+    */
 }
 
 //This function handles the bluetooth capability and sends out the data read in from ADCvalue()
