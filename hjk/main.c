@@ -59,6 +59,7 @@
 
 #include "targetFunctions.h"
 #include "delay.h"
+#include "em_adc.h"
 
 /***********************************************************************************************//**
  * @addtogroup Application
@@ -106,38 +107,29 @@ static const gecko_configuration_t config = {
 // Flag for indicating DFU Reset must be performed
 uint8_t boot_to_dfu = 0;
 
-
  // @brief  Main function
 int main(void){
-  EMU_DCDCInit_TypeDef dcdcInit = EMU_DCDCINIT_DEFAULT;
 
-  // Initialize device
+ // Initialize device
   initMcu();
   // Initialize board
   initBoard();
-
 
   // Setup SysTick Timer for 1 msec interrupts
   if (SysTick_Config(CMU_ClockFreqGet(cmuClock_CORE) / 1000)) {
     while (1) ;
   }
-
   initGPIO();
-  initADC();
+  initSingleADC();
 
   // Initialize stack
   gecko_init(&config);
 
-  while (1) {
 
-	  GPIO_PinOutClear(gpioPortC, pinNumb);
-	  Delay(1000);
-	  GPIO_PinOutSet(gpioPortC, pinNumb);
-	  Delay(1000);
-  }
-}/*
 
-	// Event pointer for handling events
+ while (1) {
+
+	 // Event pointer for handling events
     struct gecko_cmd_packet* evt;
 
     // Check for stack event.
@@ -228,5 +220,3 @@ int main(void){
   }
 }
 
-/** @} (end addtogroup app) */
-/** @} (end addtogroup Application) */

@@ -12,7 +12,7 @@
 
 #define pinNumb 11
 
-void initADC(void);
+void initSingleADC(void);
 void initGPIO(void);
 void ADCoutputLED(uint32_t dataIn);
 int32_t ADCvalue();
