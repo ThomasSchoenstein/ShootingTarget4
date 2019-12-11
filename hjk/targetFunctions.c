@@ -59,9 +59,6 @@ void initSingleADC(void){
 }
 
 int32_t ADCvalue(){
-//	value=i;
-
-//	i++;
     // Start ADC conversion
     ADC_Start(ADC0, adcStartSingle);
 
@@ -72,7 +69,7 @@ int32_t ADCvalue(){
     value = ADC_DataSingleGet(ADC0);
 
 
-    GPIO_PinOutClear(gpioPortC, pinNumb);
+    GPIO_PinOutToggle(gpioPortC, pinNumb);
 
     return value;
 
